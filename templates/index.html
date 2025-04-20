@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Flipify</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    [x-cloak] { display: none !important; }
+    body {
+      background: linear-gradient(135deg, #d8b4fe, #fbcfe8);
+      overflow: hidden;
+    }
+    .glass-card {
+      backdrop-filter: blur(20px);
+      background-color: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+    }
+    .floating-shape {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.3;
+      animation: float 8s ease-in-out infinite;
+    }
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-30px); }
+      100% { transform: translateY(0px); }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center relative">
+
+  <!-- Floating Shapes -->
+  <div class="floating-shape w-24 h-24 bg-purple-300 top-10 left-10 animate-spin-slow"></div>
+  <div class="floating-shape w-16 h-16 bg-pink-300 bottom-20 right-20 animate-pulse"></div>
+
+  <!-- App -->
+  <div
+    class="glass-card w-full max-w-2xl p-8 rounded-3xl text-white relative z-10"
+    x-data="app()"
+    x-init="initialize()"
+  >
+    <h1 class="text-4xl font-extrabold text-center mb-2">Flipify</h1>
+    <p class="text-center text-xl text-white/80 mb-2">We flip it. You pick it.</p>
+    <p class="text-center text-sm text-white/60 mb-6">Enter your choices and let Flipify pick one randomly for you!</p>
+
+    <!-- Input -->
+    <input
+      x-model="input"
+      @keydown.enter.prevent="addOptions"
+      type="text"
+      placeholder="Type something and press Enter..."
+      class="w-full p-3 text-black bg-white/70 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-400 mb-4"
+    />
+
+    <!-- Tags -->
+    <div class="flex flex-wrap gap-3 mb-6">
+      <template x-for="(item, index) in options" :key="index">
+        <div class="bg-purple-200 text-purple-900 px-4 py-2 rounded-full flex items-center gap-2 shadow hover:scale-105 transition">
+          <span x-text="item"></span>
+          <button @click="removeOption(index)" class="text-sm hover:text-red-500">&times;</button>
+        </div>
+      </template>
+    </div>
+
+    <!-- Buttons -->
+    <div class="flex flex-col sm:flex-row justify-center gap-4 mb-4">
+      <button
+        @click="pickRandom"
+        class="bg-purple-600 hover:bg-purple-700 transition px-6 py-3 rounded-full text-lg font-semibold shadow-xl w-full sm:w-auto"
+      >
+        🎲 Pick One
+      </button>
+      <div x-data="{ open: false }" class="relative w-full sm:w-auto">
+        <button
+          @click="open = !open"
+          class="bg-purple-600 hover:bg-purple-700 transition px-6 py-3 rounded-full text-lg font-semibold shadow-xl w-full"
+        >
+          🔗 Share
+        </button>
+        <div
+          x-show="open"
+          @click.outside="open = false"
+          x-cloak
+          class="absolute mt-2 right-0 bg-white text-black rounded-lg shadow-lg py-2 w-40 z-50"
+        >
+          <a :href="twitterUrl" target="_blank" class="block px-4 py-2 hover:bg-gray-100">🐦 Twitter</a>
+          <a :href="facebookUrl" target="_blank" class="block px-4 py-2 hover:bg-gray-100">📘 Facebook</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Last picked -->
+    <template x-if="lastPicked">
+      <div class="text-center text-white text-lg mt-4">
+        Last picked: <span class="font-semibold text-purple-100" x-text="lastPicked"></span>
+      </div>
+    </template>
+
+    <!-- Popup -->
+    <div
+      x-show="popupVisible"
+      x-cloak
+      x-transition
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+      <div class="bg-white text-black rounded-3xl p-8 max-w-md w-full text-center shadow-2xl">
+        <div class="text-2xl font-bold mb-4">🎉 You should choose:</div>
+        <div class="text-4xl font-extrabold text-purple-600 mb-6" x-text="result"></div>
+        <button @click="popupVisible = false; lastPicked = result" class="text-sm text-gray-500 hover:text-red-500 mt-4">✖ Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function app() {
+      return {
+        input: '',
+        options: [],
+        result: '',
+        lastPicked: '',
+        popupVisible: false,
+
+        initialize() {
+          // Fresh start every time
+          this.input = '';
+          this.options = [];
+          this.result = '';
+          this.lastPicked = '';
+          this.popupVisible = false;
+        },
+
+        addOptions() {
+          const words = this.input.trim().split(/\s+/);
+          for (const word of words) {
+            if (word && !this.options.includes(word)) {
+              this.options.push(word);
+            }
+          }
+          this.input = '';
+        },
+
+        removeOption(index) {
+          this.options.splice(index, 1);
+        },
+
+        pickRandom() {
+          if (this.options.length > 0) {
+            const index = Math.floor(Math.random() * this.options.length);
+            this.result = this.options[index];
+            this.popupVisible = true;
+          }
+        },
+
+        get twitterUrl() {
+          return `https://twitter.com/intent/tweet?text=${encodeURIComponent('Help me choose on Flipify!')}`;
+        },
+        get facebookUrl() {
+          return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent('https://flipify.app')}`;
+        }
+      }
+    }
+  </script>
+</body>
+</html>
+
