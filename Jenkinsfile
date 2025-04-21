@@ -1,6 +1,5 @@
 pipeline {
   agent { label 'ec2' }
-  ...
 }
   environment {
     IMAGE_NAME = 'flipify'
