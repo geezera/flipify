@@ -22,7 +22,7 @@ pipeline {
         script {
           def commitMessage = sh(script: "git log -1 --pretty=%B", returnStdout: true).trim()
           echo "Latest commit message: ${commitMessage}"
-          if (!commitMessage.startsWith("Deploy")) {
+          if (!commitMessage.startsWith("DEPLOY")) {
             currentBuild.result = 'ABORTED'
             error("Not a deployment commit. Skipping...")
           }
